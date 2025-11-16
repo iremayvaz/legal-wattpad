@@ -1,4 +1,4 @@
-package com.iremayvaz.common.model;
+package com.iremayvaz.auth.model.enums;
 
 public enum Gender {
     FEMALE,

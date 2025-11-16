@@ -1,17 +1,24 @@
 package com.iremayvaz.auth.model.entity;
 
+import com.iremayvaz.common.model.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.Set;
 
 // auth/model/User.java
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+
 @Entity
 @Table(name = "users")
-public class User {
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class User extends BaseEntity {
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -30,7 +37,6 @@ public class User {
     )
     private Set<Role> roles = new HashSet<>();
 
-    // createdAt vs. için base entity de kullanabilirsin
-    // getter/setter/constructor
+    private Integer totalPenaltyPoints = 0; // Her yayınlanmaya çalışan chapter'ın ceza puanına göre
 }
 

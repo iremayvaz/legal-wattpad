@@ -1,20 +1,26 @@
 package com.iremayvaz.content.model.entity;
 
-import com.iremayvaz.common.model.ChapterStatus;
+import com.iremayvaz.common.model.entity.BaseEntity;
+import com.iremayvaz.content.model.enums.ChapterStatus;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
 // content/model/Chapter.java
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+
 @Entity
 @Table(name = "chapters",
         uniqueConstraints = @UniqueConstraint(columnNames = {"story_id", "number"}))
-public class Chapter {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Chapter extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "story_id", nullable = false)

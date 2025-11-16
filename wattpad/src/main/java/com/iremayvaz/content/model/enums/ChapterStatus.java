@@ -1,4 +1,4 @@
-package com.iremayvaz.common.model;
+package com.iremayvaz.content.model.enums;
 
 public enum ChapterStatus {
     DRAFT,

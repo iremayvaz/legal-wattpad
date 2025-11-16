@@ -1,19 +1,25 @@
 package com.iremayvaz.content.model.entity;
 
 import com.iremayvaz.auth.model.entity.User;
+import com.iremayvaz.common.model.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 
 // content/model/ChapterVersion.java
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+
 @Entity
 @Table(name = "chapter_versions",
         uniqueConstraints = @UniqueConstraint(columnNames = {"chapter_id", "version_no"}))
-public class ChapterVersion {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class ChapterVersion extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chapter_id", nullable = false)
