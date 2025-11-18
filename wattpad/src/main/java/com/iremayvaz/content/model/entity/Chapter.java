@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +32,10 @@ public class Chapter extends BaseEntity {
 
     private String title;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "current_version_id")
+    private ChapterVersion currentVersion;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ChapterStatus status = ChapterStatus.DRAFT;
@@ -38,6 +43,9 @@ public class Chapter extends BaseEntity {
 
     @OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChapterVersion> versions = new ArrayList<>();
+
+    @Column(name = "published_at")
+    private Instant publishedAt;
 
     // İstersen currentVersionId tutan bir field açabilirsin
 }

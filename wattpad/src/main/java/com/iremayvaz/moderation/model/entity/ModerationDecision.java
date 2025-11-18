@@ -39,6 +39,6 @@ public class ModerationDecision extends BaseEntity {
     @JoinColumn(name = "decided_by")
     private User decidedBy;
 
-    private Instant decidedAt = Instant.now();
+    private Instant decidedAt;
 }
 
