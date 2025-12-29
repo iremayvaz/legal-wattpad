@@ -5,6 +5,7 @@ import com.iremayvaz.moderation.model.dto.ModerationResult;
 import com.iremayvaz.moderation.model.enums.Severity;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,30 +25,28 @@ public class FakeMLClientService implements MLClientService {
     // risk skor kimin büyükse o ayarlanmalı
     @Override
     public ModerationResult analyzeText(String text) {
-        // 1) ML modelini çağır, tahminleri al (örnek)
         List<LabelPrediction> predictions = callYourModel(text);
 
-        // 2) En kötü severity ve en yüksek skoru hesapla
-        Severity worstSeverity = Severity.LOW;  // başlangıç
-        double maxRiskScore = 0.0;
+        Severity worstSeverity = Severity.LOW;
+        BigDecimal maxRiskScore = BigDecimal.ZERO;
 
         for (LabelPrediction p : predictions) {
-            // severity: LOW < MEDIUM < HIGH (enum sırası önemli)
             if (p.getSeverity().ordinal() > worstSeverity.ordinal()) {
                 worstSeverity = p.getSeverity();
             }
 
-            // score: en büyük olana bak
-            if (p.getScore() != 0 && p.getScore() > maxRiskScore) {
-                maxRiskScore = p.getScore();
+            BigDecimal score = p.getScore(); // BigDecimal
+
+            // null değilse ve score > maxRiskScore ise güncelle
+            if (score != null && score.compareTo(BigDecimal.ZERO) > 0 && score.compareTo(maxRiskScore) > 0) {
+                maxRiskScore = score;
             }
         }
 
-        // 3) ModerationResult oluştur
         ModerationResult result = new ModerationResult();
         result.setPredictions(predictions);
-        result.setSeverity(worstSeverity);   // getSeverity() burada bu olacak
-        result.setScore(maxRiskScore);       // istersen adı maxRiskScore olsun
+        result.setSeverity(worstSeverity);
+        result.setScore(maxRiskScore);
         return result;
     }
 
@@ -60,13 +59,13 @@ public class FakeMLClientService implements MLClientService {
         LabelPrediction p1 = new LabelPrediction();
         p1.setLabelCode("SEXUAL_CONTENT");
         p1.setSeverity(Severity.MEDIUM);
-        p1.setScore(0.65);
+        p1.setScore(new BigDecimal(0.65));
 
         // örnek 2
         LabelPrediction p2 = new LabelPrediction();
         p2.setLabelCode("HATE_SPEECH");
         p2.setSeverity(Severity.HIGH);
-        p2.setScore(0.83);
+        p2.setScore(new BigDecimal(0.83));
 
         list.add(p1);
         list.add(p2);

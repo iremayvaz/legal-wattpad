@@ -3,16 +3,12 @@ package com.iremayvaz.content.model.entity;
 import com.iremayvaz.common.model.entity.BaseEntity;
 import com.iremayvaz.content.model.enums.ChapterStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-// content/model/Chapter.java
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,7 +19,7 @@ import java.util.List;
         uniqueConstraints = @UniqueConstraint(columnNames = {"story_id", "number"}))
 public class Chapter extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "story_id", nullable = false)
     private Story story;
 
@@ -39,14 +35,11 @@ public class Chapter extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ChapterStatus status = ChapterStatus.DRAFT;
-    // DRAFT, PENDING_REVIEW, REJECTED, PUBLISHED, BLOCKED
 
     @OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt ASC")
     private List<ChapterVersion> versions = new ArrayList<>();
 
     @Column(name = "published_at")
     private Instant publishedAt;
-
-    // İstersen currentVersionId tutan bir field açabilirsin
 }
-

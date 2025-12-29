@@ -32,9 +32,6 @@ public class ChapterVersion extends BaseEntity {
     @Column(nullable = false)
     private String content; // 1000+ kelimelik metnin asıl saklandığı yer
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt = Instant.now();
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;

@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Getter
@@ -46,7 +47,7 @@ public class ModerationLabel extends BaseEntity {
     @DecimalMin("0.0")
     @DecimalMax("1.0")
     @Column(name = "score", precision = 5, scale = 4, nullable = true)
-    private Double score;
+    private BigDecimal score;
 
     @Column(name = "evidence_spans", columnDefinition = "text")
     private String evidenceSpansJson;

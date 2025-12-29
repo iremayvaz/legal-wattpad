@@ -4,15 +4,11 @@ import com.iremayvaz.auth.model.entity.User;
 import com.iremayvaz.common.model.entity.BaseEntity;
 import com.iremayvaz.content.model.enums.StoryStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-// content/model/Story.java
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,7 +18,7 @@ import java.util.List;
 @Table(name = "stories")
 public class Story extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
@@ -35,13 +31,13 @@ public class Story extends BaseEntity {
     @Column(columnDefinition = "text")
     private String description;
 
+    private String coverUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private StoryStatus status = StoryStatus.DRAFT; // DRAFT, PUBLISHED, ARCHIVED, BLOCKED
+    private StoryStatus status = StoryStatus.DRAFT;
 
-    @OneToMany(mappedBy = "story", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "story", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("number ASC")
     private List<Chapter> chapters = new ArrayList<>();
-
-    // timestamps, getters, setters...
 }
-

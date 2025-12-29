@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @RequiredArgsConstructor
@@ -67,7 +68,9 @@ public class ModerationService { // Moderation servisi ML’i kullanır!
             decision.setDecisionSummary("ML: yüksek risk, otomatik bloklandı.");
             chapter.setStatus(ChapterStatus.BLOCKED);
             queue.setState(ModerationState.DECIDED);
-        } else if (result.getSeverity() == Severity.LOW && result.getScore() < 0.3) {
+        } else if (result.getSeverity() == Severity.LOW
+                && result.getScore() != null
+                && result.getScore().compareTo(new BigDecimal("0.3")) < 0) {
             // düşük risk → APPROVE
             decision.setFinalStatus(ModerationDecisionStatus.APPROVE);
             decision.setDecisionSummary("ML: düşük risk, otomatik onaylandı.");

@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -13,5 +15,5 @@ import lombok.Setter;
 public class LabelPrediction {
     private String labelCode;
     private Severity severity;
-    private double score;
+    private BigDecimal score;
 }
