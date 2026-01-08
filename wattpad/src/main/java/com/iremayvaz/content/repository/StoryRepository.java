@@ -1,6 +1,7 @@
 package com.iremayvaz.content.repository;
 
 import com.iremayvaz.content.model.entity.Story;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +15,10 @@ import java.util.Optional;
 public interface StoryRepository extends JpaRepository<Story, Long> {
     List<Story> findByAuthorId(Long authorId);
     boolean existsBySlug(String slug);
+
+    @EntityGraph(attributePaths = {"author"}) // authorName için
+    Optional<Story> findBySlug(String slug);
+
 
     @Query("""
     select s
@@ -34,5 +39,4 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
     """)
     Optional<Story> findByIdWithAuthor(@Param("id") Long id);
 
-    Optional<Story> findBySlug(String slug);
 }

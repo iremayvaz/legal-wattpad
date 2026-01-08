@@ -1,9 +1,11 @@
 package com.iremayvaz.content.service;
 
 import com.iremayvaz.auth.model.entity.User;
+import com.iremayvaz.auth.repository.UserRepository;
+import com.iremayvaz.content.model.dto.request.AddChapterVersionRequest;
 import com.iremayvaz.content.model.dto.request.CreateChapterRequest;
-import com.iremayvaz.content.model.dto.request.UpdateChapterContentRequest;
 import com.iremayvaz.content.model.dto.response.ChapterResponse;
+import com.iremayvaz.content.model.dto.response.ChapterVersionResponse;
 import com.iremayvaz.content.model.entity.Chapter;
 import com.iremayvaz.content.model.entity.ChapterVersion;
 import com.iremayvaz.content.model.entity.Story;
@@ -22,6 +24,7 @@ public class ChapterVersionService {
     private final StoryRepository storyRepository;
     private final ChapterRepository chapterRepository;
     private final ChapterVersionRepository chapterVersionRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public ChapterResponse createChapter(Long storyId, Long authorId, CreateChapterRequest createChapterRequest) {
@@ -50,25 +53,27 @@ public class ChapterVersionService {
     }
 
     @Transactional
-    public ChapterResponse updateChapterContent(Long chapterId, Long authorId, UpdateChapterContentRequest req) {
+    public ChapterVersionResponse addNewVersion(Long chapterId, Long userId, AddChapterVersionRequest addChapterVersionRequest) {
+        User user = userRepository.findById(userId).orElseThrow();
         Chapter chapter = chapterRepository.findById(chapterId).orElseThrow();
 
-        int latest = chapterVersionRepository.findFirstByChapterIdOrderByVersionNoDesc(chapterId)
-                .map(ChapterVersion::getVersionNo)
-                .orElse(0);
+        int nextVersionNo = chapterVersionRepository
+                .findFirstByChapterIdOrderByVersionNoDesc(chapterId)
+                .map(v -> v.getVersionNo() + 1)
+                .orElse(1);
 
-        ChapterVersion newVersion = new ChapterVersion();
-        newVersion.setChapter(chapter);
-        newVersion.setVersionNo(latest + 1);
-        newVersion.setContent(req.getContent());
+        ChapterVersion v = new ChapterVersion();
+        v.setChapter(chapter);
+        v.setVersionNo(nextVersionNo);
+        v.setContent(addChapterVersionRequest.getContent());
+        v.setCreatedBy(user);
 
-        User user = new User();
-        user.setId(authorId);
-        newVersion.setCreatedBy(user);
+        chapterVersionRepository.save(v);
 
-        chapterVersionRepository.save(newVersion);
+        chapter.setCurrentVersion(v);
+        chapterRepository.save(chapter);
 
-        return toChapterResponse(chapter, latest + 1);
+        return toChapterVersionResponse(v);
     }
 
     private ChapterResponse toChapterResponse(Chapter chapter, Integer latestVersionNo) {
@@ -80,5 +85,15 @@ public class ChapterVersionService {
         chapterResponse.setStatus(chapter.getStatus());
         chapterResponse.setLatestVersionNo(latestVersionNo);
         return chapterResponse;
+    }
+
+    private ChapterVersionResponse toChapterVersionResponse(ChapterVersion v) {
+        ChapterVersionResponse r = new ChapterVersionResponse();
+        r.setId(v.getId());
+        r.setChapterId(v.getChapter().getId());
+        r.setVersionNo(v.getVersionNo());
+        r.setCreatedByUserId(v.getCreatedBy() != null ? v.getCreatedBy().getId() : null);
+        r.setCreatedAt(v.getCreatedAt()); // BaseEntity’de varsa
+        return r;
     }
 }

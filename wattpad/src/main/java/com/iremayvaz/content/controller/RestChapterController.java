@@ -3,7 +3,9 @@ package com.iremayvaz.content.controller;
 import com.iremayvaz.content.model.dto.request.AddChapterVersionRequest;
 import com.iremayvaz.content.model.dto.response.ChapterResponse;
 import com.iremayvaz.content.model.dto.response.ChapterVersionResponse;
-import com.iremayvaz.content.service.ChapterService;
+import com.iremayvaz.content.service.ChapterCommandService;
+import com.iremayvaz.content.service.ChapterQueryService;
+import com.iremayvaz.content.service.ChapterVersionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +18,9 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RestChapterController {
 
-    private final ChapterService chapterService;
+    private final ChapterCommandService chapterCommandService;
+    private final ChapterQueryService chapterQueryService;
+    private final ChapterVersionService chapterVersionService;
 
     @PostMapping("/draft")
     public ResponseEntity<ChapterResponse> createDraft(
@@ -24,7 +28,7 @@ public class RestChapterController {
             @RequestParam Integer number,
             @RequestParam(required = false) String title
     ) {
-        return ResponseEntity.ok(chapterService.createChapterDraft(storyId, number, title));
+        return ResponseEntity.ok(chapterCommandService.createChapterDraft(storyId, number, title));
     }
 
     @PostMapping("/{chapterId}/versions")
@@ -33,13 +37,13 @@ public class RestChapterController {
             @RequestParam Long userId,
             @RequestBody AddChapterVersionRequest addChapterVersionRequest
     ) {
-        return ResponseEntity.ok(chapterService.addNewVersion(chapterId, userId, addChapterVersionRequest));
+        return ResponseEntity.ok(chapterVersionService.addNewVersion(chapterId, userId, addChapterVersionRequest));
     }
 
     @Operation(description = "Chapter’ı inceleme sürecine sokup Moderation’a iş oluşturur")
     @PostMapping("/{chapterId}/submit")
     public ResponseEntity<Void> submit(@PathVariable Long chapterId) {
-        chapterService.submitForReview(chapterId);
+        chapterCommandService.submitForReview(chapterId);
         return ResponseEntity.ok().build();
     }
 
