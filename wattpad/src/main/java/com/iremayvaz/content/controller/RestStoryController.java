@@ -1,5 +1,7 @@
 package com.iremayvaz.content.controller;
 
+import com.iremayvaz.content.model.dto.ChapterListItemDto;
+import com.iremayvaz.content.model.dto.StoryReadInfoDto;
 import com.iremayvaz.content.model.dto.request.CreateStoryRequest;
 import com.iremayvaz.content.model.dto.response.StoryInfoResponseDto;
 import com.iremayvaz.content.model.dto.response.StoryResponse;
@@ -52,9 +54,22 @@ public class RestStoryController {
         return storyQueryService.suggestions(query, limit);
     }
 
-    @Operation(description = "Story bilgisi")
-    @GetMapping("/{storyId}")
-    public StoryInfoResponseDto getStoryInfo(@PathVariable Long storyId) {
-        return storyQueryService.getStoryInfo(storyId);
+    @Operation(description = "Herhangi bir story'nin okunmadan önceki bilgisi")
+    @GetMapping("/{storyId}/info")
+    public StoryInfoResponseDto getStoryInfo(@PathVariable Long storyId,
+                                             @RequestParam(required = false) Long userId) {
+        return storyQueryService.getStoryInfo(storyId, userId);
+    }
+
+    @Operation(description = "HEMEN OKU BUTONU")
+    @GetMapping("/{slug}/read-info")
+    public StoryReadInfoDto readInfo(@PathVariable String slug) {
+        return storyQueryService.getStoryReadInfo(slug);
+    }
+
+    @Operation(description = "Hikaye chapter bilgileri")
+    @GetMapping("/{slug}/chapters/read")
+    public List<ChapterListItemDto> readChapters(@PathVariable String slug) {
+        return storyQueryService.getChaptersForRead(slug);
     }
 }

@@ -1,4 +1,4 @@
-package com.iremayvaz.content.model.dto.response;
+package com.iremayvaz.common.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

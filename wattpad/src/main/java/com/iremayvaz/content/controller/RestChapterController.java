@@ -1,5 +1,7 @@
 package com.iremayvaz.content.controller;
 
+import com.iremayvaz.content.model.dto.ChapterReadDto;
+import com.iremayvaz.content.model.dto.ChapterSummaryDto;
 import com.iremayvaz.content.model.dto.request.AddChapterVersionRequest;
 import com.iremayvaz.content.model.dto.response.ChapterResponse;
 import com.iremayvaz.content.model.dto.response.ChapterVersionResponse;
@@ -11,6 +13,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "Chapter API", description = "Bölüm işlemleri")
 @RestController
@@ -45,6 +49,17 @@ public class RestChapterController {
     public ResponseEntity<Void> submit(@PathVariable Long chapterId) {
         chapterCommandService.submitForReview(chapterId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/read")
+    public ChapterReadDto readChapter(@PathVariable Long id) {
+        return chapterQueryService.getChapterRead(id);
+    }
+
+    @GetMapping("/story/{story_id}")
+    public List<ChapterSummaryDto> getChaptersByOrder(@PathVariable Long story_id,
+                                                      @RequestParam(defaultValue = "false") boolean chaptersNewestFirst) {
+        return chapterQueryService.getChaptersByOrder(story_id, chaptersNewestFirst);
     }
 
 }

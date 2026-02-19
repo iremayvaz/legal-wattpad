@@ -1,13 +1,27 @@
 package com.iremayvaz.content.service;
 
 import com.iremayvaz.auth.repository.UserRepository;
+import com.iremayvaz.common.dto.CommentDto;
+import com.iremayvaz.common.dto.response.RatingSummaryDto;
+import com.iremayvaz.common.model.entity.Comment;
+import com.iremayvaz.common.model.entity.StoryRating;
 import com.iremayvaz.common.repository.CommentRepository;
+import com.iremayvaz.common.repository.StoryRatingRepository;
+import com.iremayvaz.common.service.StoryRatingService;
+import com.iremayvaz.content.model.dto.ChapterListItemDto;
+import com.iremayvaz.content.model.dto.ChapterSummaryDto;
+import com.iremayvaz.content.model.dto.StoryReadInfoDto;
 import com.iremayvaz.content.model.dto.request.SuggestionItemDto;
 import com.iremayvaz.content.model.dto.response.*;
+import com.iremayvaz.content.model.entity.Chapter;
 import com.iremayvaz.content.model.entity.Story;
+import com.iremayvaz.content.model.enums.ChapterStatus;
+import com.iremayvaz.content.model.enums.StoryStatus;
+import com.iremayvaz.content.repository.ChapterRepository;
 import com.iremayvaz.content.repository.StoryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,8 +36,10 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class StoryQueryService { // HEMEN OKU
     private final StoryRepository storyRepository;
-    private final UserRepository userRepository;
     private final CommentRepository commentRepository;
+    private final ChapterRepository chapterRepository;
+    private final ChapterQueryService chapterQueryService;
+    private final StoryRatingRepository storyRatingRepository;
 
     public List<StoryResponse> getStoriesByAuthor(Long authorId) {
         return storyRepository.findByAuthorId(authorId)
@@ -33,17 +49,28 @@ public class StoryQueryService { // HEMEN OKU
     }
 
     @Transactional(readOnly = true)
-    public StoryInfoResponseDto getStoryInfo(Long storyId) {
+    public StoryInfoResponseDto getStoryInfo(Long storyId, Long userId) {
+
         Story s = storyRepository.findByIdWithAuthor(storyId)
                 .orElseThrow(() -> new EntityNotFoundException("Story not found: " + storyId));
 
         long commentCount = commentRepository.countByStoryIdAndDeletedFalse(s.getId());
 
         // Rating sistemi henüz yoksa:
-        BigDecimal avgRating = BigDecimal.ZERO; // sonra hesaplanacak
-        long ratingCount = 0L;                 // sonra hesaplanacak
+        BigDecimal avgRating = storyRatingRepository.avgByStoryId(storyId)
+                .orElse(BigDecimal.ZERO); // null dönebilir
+        long ratingCount = storyRatingRepository.countByStoryId(storyId);
 
-        // "Listeme ekle" - sende Watchlist/Favorite yoksa null bırak
+        RatingSummaryDto rating = new RatingSummaryDto(avgRating, ratingCount);
+
+        Integer myRating = null;
+        if (userId != null) {
+            myRating = storyRatingRepository.findByStoryIdAndUserId(storyId, userId)
+                    .map(StoryRating::getValue)
+                    .orElse(null);
+        }
+
+        // Listeme ekle / benim puanım (şimdilik yoksa null)
         Boolean inMyList = null;
 
         AuthorDto authorDto = new AuthorDto(
@@ -52,21 +79,54 @@ public class StoryQueryService { // HEMEN OKU
                 s.getAuthor().getDisplayName()
         );
 
-        RatingSummaryDto rating = new RatingSummaryDto(avgRating, ratingCount);
+        // --------- CHAPTERS (UI: Bölümler) ----------
+        List<ChapterSummaryDto> chapters = chapterQueryService.getChaptersByOrder(s.getId(),
+                                                                false); // EN ESKİDEN EN YENİYE
+        int chapterCount = chapters.size();
+
+        // --------- COMMENTS (UI: Okur yorumları) ----------
+        // İlk sayfada örnek 10 root yorum göster
+        Page<Comment> rootComments = commentRepository
+                .findByStoryIdAndDeletedFalseAndParentIsNullOrderByCreatedAtDesc(
+                        s.getId(),
+                        PageRequest.of(0, 10)
+                );
+
+        List<CommentDto> comments = rootComments.getContent().stream()
+                .map(c -> new CommentDto(
+                        c.getId(),
+                        (c.isSpoiler() ? null : c.getContent()),
+                        c.isSpoiler(),
+                        c.isDeleted(),
+                        c.getAuthor().getId(),
+                        c.getAuthor().getUsername(),
+                        c.getAuthor().getDisplayName(),
+                        c.getLikeCount(),
+                        c.getDislikeCount(),
+                        c.getReplyCount(),
+                        (c.getParent() == null ? null : c.getParent().getId()),
+                        c.getCreatedAt()
+                ))
+                .toList();
 
         return new StoryInfoResponseDto(
                 s.getId(),
-                s.getTitle(),
-                s.getSlug(),
-                s.getDescription(),
-                s.getCoverUrl(),
-                s.getStatus(),
-                authorDto,
-                rating,
-                commentCount,
-                inMyList
+                s.getTitle(),       // Başlık
+                s.getSlug(),        // Hikaye adının slug'ı
+                s.getDescription(), // Hikaye hakkında
+                s.getCoverUrl(),    // Kapak fotoğrafı
+                s.getStatus(),      // Story durumu
+                authorDto,          // Yazar Bilgisi
+                rating,             // Oy
+                commentCount,       // Yorum
+                chapterCount,       // Bölüm sayısı
+                chapters,           // Bölümler
+                comments,           // Yorumlar
+                inMyList,           // Listeme ekle
+                myRating            // Oyum
         );
     }
+
 
     public List<StoryResponse> getAllStories() {
         return storyRepository.findAll()
@@ -99,6 +159,53 @@ public class StoryQueryService { // HEMEN OKU
         return new SuggestionResponseDto(query, scored);
     }
 
+    @Transactional(readOnly = true)
+    public StoryReadInfoDto getStoryReadInfo(String slug) {
+        Story story = storyRepository.findBySlug(slug)
+                .orElseThrow(() -> new EntityNotFoundException("Story not found: " + slug));
+
+        // Public okuma: sadece PUBLISHED story
+        if (story.getStatus() != StoryStatus.PUBLISHED) {
+            // 404 gibi davranmak daha güvenli
+            throw new EntityNotFoundException("Story not found: " + slug);
+        }
+
+        return StoryReadInfoDto.builder()
+                .id(story.getId())
+                .title(story.getTitle())
+                .slug(story.getSlug())
+                .description(story.getDescription())
+                .coverUrl(story.getCoverUrl())
+                .status(story.getStatus())
+                .authorId(story.getAuthor().getId())
+                .authorName(story.getAuthor().getDisplayName())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChapterListItemDto> getChaptersForRead(String slug) {
+        Story story = storyRepository.findBySlug(slug)
+                .orElseThrow(() -> new EntityNotFoundException("Story not found: " + slug));
+
+        if (story.getStatus() != StoryStatus.PUBLISHED) {
+            throw new EntityNotFoundException("Story not found: " + slug);
+        }
+
+        List<Chapter> chapters = chapterRepository.findAllByStorySlugOrderByNumber(slug);
+
+        return chapters.stream()
+                .filter(c -> c.getStatus() == ChapterStatus.PUBLISHED)
+                .map(c -> ChapterListItemDto.builder()
+                        .id(c.getId())
+                        .number(c.getNumber())
+                        .title(c.getTitle())
+                        .status(c.getStatus())
+                        .readable(true)
+                        .build())
+                .toList();
+    }
+
+    // PRIVATE UTILITY METHODS
     private SuggestionItemDto score(Story b, String q) {
         String title = safeLower(normalize(b.getTitle()));
         String author = safeLower(normalize(b.getAuthor().getFirstName() + ' ' + b.getAuthor().getLastName()));

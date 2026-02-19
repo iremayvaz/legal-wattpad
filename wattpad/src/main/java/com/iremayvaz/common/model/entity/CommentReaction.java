@@ -23,7 +23,7 @@ import lombok.Setter;
                 @Index(name = "idx_comment_reactions_comment", columnList = "comment_id"),
                 @Index(name = "idx_comment_reactions_user", columnList = "user_id")
         })
-public class CommentReaction extends BaseEntity {
+public class CommentReaction extends BaseEntity { // kim, hangi yoruma, ne tepkisi verdi?
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "comment_id", nullable = false)

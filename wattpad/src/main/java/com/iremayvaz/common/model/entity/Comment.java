@@ -23,7 +23,7 @@ import java.util.List;
                 @Index(name = "idx_comments_author", columnList = "author_id"),
                 @Index(name = "idx_comments_created", columnList = "created_at")
         })
-public class Comment extends BaseEntity {
+public class Comment extends BaseEntity { // yorumun kendisi (content, spoiler, parent/replies vb.)
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "author_id", nullable = false)
@@ -43,7 +43,7 @@ public class Comment extends BaseEntity {
     private String content;
 
     @Column(nullable = false)
-    private boolean spoiler = false;
+    private boolean isSpoiler = false;
 
     // thread (reply)
     @ManyToOne(fetch = FetchType.LAZY)

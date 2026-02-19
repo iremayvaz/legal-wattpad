@@ -19,7 +19,7 @@ public class ContentAccessPolicy {
         if (currentUser == null || currentUser.getRoles() == null) return false;
         // Rol isimlerini kendi Role entity'ne göre ayarla:
         return currentUser.getRoles().stream().anyMatch(r ->
-                "EDITOR".equalsIgnoreCase(r.getRoleName().toString()) || "ADMIN".equalsIgnoreCase(r.getRoleName().toString()));
+                "EDITOR".equalsIgnoreCase(r.getName().toString()) || "ADMIN".equalsIgnoreCase(r.getName().toString()));
     }
 
     public boolean canReadStory(User currentUser, Story story) {

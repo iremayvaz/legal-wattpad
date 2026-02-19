@@ -19,6 +19,6 @@ import lombok.Setter;
 public class Role  extends BaseEntity {
 
     @Column(nullable = false, unique = true, length = 32)
-    private RoleName roleName; // "AUTHOR", "READER", "MODERATOR", "ADMIN"
+    private RoleName name; // "AUTHOR", "READER", "MODERATOR", "ADMIN"
 }
 

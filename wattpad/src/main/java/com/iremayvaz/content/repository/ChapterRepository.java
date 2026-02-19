@@ -13,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface ChapterRepository extends JpaRepository<Chapter, Long> {
     List<Chapter> findByStoryIdOrderByNumberAsc(Long storyId);
+    List<Chapter> findByStoryIdOrderByNumberDesc(Long storyId);
     Optional<Chapter> findByStoryIdAndNumber(Long storyId, Integer number);
 
     // Story sayfası: chapter listesi
@@ -28,6 +29,7 @@ public interface ChapterRepository extends JpaRepository<Chapter, Long> {
         select c from Chapter c
         join fetch c.story s
         left join fetch c.currentVersion cv
+        left join fetch s.author a
         where c.id = :id
     """)
     Optional<Chapter> findByIdWithStoryAndCurrentVersion(@Param("id") Long id);

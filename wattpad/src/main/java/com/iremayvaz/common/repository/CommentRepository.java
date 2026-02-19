@@ -20,4 +20,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByParentIdOrderByCreatedAtAsc(Long parentId);
 
     long countByStoryIdAndDeletedFalse(Long storyId);
+
+    // sadece root yorumlar (parent null) + en yeniler
+    Page<Comment> findByStoryIdAndDeletedFalseAndParentIsNullOrderByCreatedAtDesc(Long storyId, Pageable pageable);
+
 }

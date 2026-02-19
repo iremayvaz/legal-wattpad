@@ -28,8 +28,7 @@ public class ChapterVersion extends BaseEntity {
     @Column(name = "version_no", nullable = false)
     private Integer versionNo; // 1, 2, 3...
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "text")
     private String content; // 1000+ kelimelik metnin asıl saklandığı yer
 
     @ManyToOne(fetch = FetchType.LAZY)

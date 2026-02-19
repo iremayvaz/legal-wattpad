@@ -26,6 +26,7 @@ public class Chapter extends BaseEntity {
     @Column(nullable = false)
     private Integer number; // 1, 2, 3...
 
+    @Column(nullable = false)
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
