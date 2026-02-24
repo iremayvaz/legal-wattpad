@@ -19,6 +19,7 @@ import com.iremayvaz.content.model.enums.ChapterStatus;
 import com.iremayvaz.content.model.enums.StoryStatus;
 import com.iremayvaz.content.repository.ChapterRepository;
 import com.iremayvaz.content.repository.StoryRepository;
+import com.iremayvaz.content.repository.UserLibraryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -40,6 +41,7 @@ public class StoryQueryService { // HEMEN OKU
     private final ChapterRepository chapterRepository;
     private final ChapterQueryService chapterQueryService;
     private final StoryRatingRepository storyRatingRepository;
+    private final UserLibraryRepository userLibraryRepository;
 
     public List<StoryResponse> getStoriesByAuthor(Long authorId) {
         return storyRepository.findByAuthorId(authorId)
@@ -70,8 +72,12 @@ public class StoryQueryService { // HEMEN OKU
                     .orElse(null);
         }
 
-        // Listeme ekle / benim puanım (şimdilik yoksa null)
-        Boolean inMyList = null;
+        // Listeme ekle
+        Boolean inMyList = false;
+
+        if (userId != null) {
+            inMyList = userLibraryRepository.existsByUserIdAndStoryId(userId, s.getId());
+        }
 
         AuthorDto authorDto = new AuthorDto(
                 s.getAuthor().getId(),

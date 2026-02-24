@@ -67,6 +67,13 @@ public class RestStoryController {
         return storyQueryService.getStoryReadInfo(slug);
     }
 
+    @Operation(description = "LİSTEME EKLE BUTONU")
+    @PostMapping("/{story_id}/library")
+    public void addToLibrary(@PathVariable Long story_id,
+                             @RequestParam Long user_id) {
+        storyCommandService.toggleLibrary(story_id, user_id);
+    }
+
     @Operation(description = "Hikaye chapter bilgileri")
     @GetMapping("/{slug}/chapters/read")
     public List<ChapterListItemDto> readChapters(@PathVariable String slug) {

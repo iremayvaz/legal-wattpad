@@ -6,10 +6,15 @@ import com.iremayvaz.common.repository.CommentRepository;
 import com.iremayvaz.content.model.dto.request.CreateStoryRequest;
 import com.iremayvaz.content.model.dto.response.StoryResponse;
 import com.iremayvaz.content.model.entity.Story;
+import com.iremayvaz.content.model.entity.UserLibrary;
 import com.iremayvaz.content.model.enums.StoryStatus;
 import com.iremayvaz.content.repository.StoryRepository;
+import com.iremayvaz.content.repository.UserLibraryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +22,7 @@ public class StoryCommandService { // YAZ/DEĞİŞTİR
 
     private final StoryRepository storyRepository;
     private final UserRepository userRepository;
+    private final UserLibraryRepository userLibraryRepository;
     private final CommentRepository commentRepository;
 
     // Yeni hikaye oluşturuluyor
@@ -35,6 +41,19 @@ public class StoryCommandService { // YAZ/DEĞİŞTİR
 
         Story saved = storyRepository.save(story);
         return toStoryResponse(story);
+    }
+
+    @Transactional
+    public void toggleLibrary(Long storyId, Long userId) {
+        Optional<UserLibrary> existing = userLibraryRepository.findByUserIdAndStoryId(userId, storyId);
+        if (existing.isPresent()) {
+            userLibraryRepository.delete(existing.get());
+        } else {
+            UserLibrary ul = new UserLibrary();
+            ul.setUser(userRepository.getReferenceById(userId));
+            ul.setStory(storyRepository.getReferenceById(storyId));
+            userLibraryRepository.save(ul);
+        }
     }
 
     private String generateSlug(String title) {
