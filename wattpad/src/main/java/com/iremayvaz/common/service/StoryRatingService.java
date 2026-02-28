@@ -24,7 +24,7 @@ public class StoryRatingService {
 
     @Transactional
     public RatingSummaryDto rateStory(Long storyId, Long userId, int value) {
-        if (value < 1 || value > 5) throw new IllegalArgumentException("1..5 olmalı");
+        if (value < 0 || value > 5) throw new IllegalArgumentException("0..5 olmalı");
 
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new EntityNotFoundException("Story not found: " + storyId));
