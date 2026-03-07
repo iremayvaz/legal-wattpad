@@ -51,15 +51,17 @@ public class RestChapterController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{id}/read")
-    public ChapterReadDto readChapter(@PathVariable Long id) {
-        return chapterQueryService.getChapterRead(id);
+    @GetMapping("/{chapterId}/read") // Story id alınmalı sanki?
+    public ChapterReadDto readChapter(@PathVariable Long chapterId,
+                                      @RequestParam Long userId) {
+        return chapterQueryService.getChapterRead(chapterId, userId);
     }
 
-    @GetMapping("/story/{story_id}")
-    public List<ChapterSummaryDto> getChaptersByOrder(@PathVariable Long story_id,
+    @GetMapping("/story/{storyId}")
+    public List<ChapterSummaryDto> getChaptersByOrder(@PathVariable Long storyId,
+                                                      @RequestParam Long userId,
                                                       @RequestParam(defaultValue = "false") boolean chaptersNewestFirst) {
-        return chapterQueryService.getChaptersByOrder(story_id, chaptersNewestFirst);
+        return chapterQueryService.getChaptersByOrder(storyId, userId, chaptersNewestFirst);
     }
 
 }

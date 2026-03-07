@@ -1,22 +1,27 @@
 package com.iremayvaz.content.service;
 
+import com.iremayvaz.auth.repository.UserRepository;
 import com.iremayvaz.content.model.dto.ChapterReadDto;
 import com.iremayvaz.content.model.dto.ChapterSummaryDto;
 import com.iremayvaz.content.model.entity.Chapter;
 import com.iremayvaz.content.model.entity.ChapterVersion;
 import com.iremayvaz.content.model.entity.Story;
+import com.iremayvaz.content.model.entity.UserChapterProgress;
 import com.iremayvaz.content.model.enums.ChapterStatus;
 import com.iremayvaz.content.model.enums.StoryStatus;
 import com.iremayvaz.content.repository.ChapterRepository;
 import com.iremayvaz.content.repository.StoryRepository;
+import com.iremayvaz.content.repository.UserChapterProgressRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
 
+import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,11 +29,18 @@ public class ChapterQueryService { // HEMEN OKU
 
     private final ChapterRepository chapterRepository;
     private final StoryRepository storyRepository;
+    private final UserChapterProgressRepository userChapterProgressRepository;
+    private final UserRepository userRepository;
 
-    @Transactional(readOnly = true)
-    public ChapterReadDto getChapterRead(Long chapterId) {
+    @Transactional
+    public ChapterReadDto getChapterRead(Long chapterId, Long userId) {
         Chapter chapter = chapterRepository.findByIdWithStoryAndCurrentVersion(chapterId)
                 .orElseThrow(() -> new EntityNotFoundException("Chapter not found: " + chapterId));
+
+        // Eğer userId gelmişse, okuma geçmişine kaydet
+        if (userId != null) {
+            saveProgress(userId, chapter);
+        }
 
         // Public okuma: story + chapter published olmalı
         if (chapter.getStory().getStatus() != StoryStatus.PUBLISHED ||
@@ -55,27 +67,38 @@ public class ChapterQueryService { // HEMEN OKU
                 .build();
     }
 
-    public List<ChapterSummaryDto> getChaptersByOrder(Long story_id, boolean chaptersNewestFirst) {
-        Story s = storyRepository.findByIdWithAuthor(story_id)
-                .orElseThrow(() -> new EntityNotFoundException("Story not found: " + story_id));
+    public List<ChapterSummaryDto> getChaptersByOrder(Long storyId, Long userId, boolean chaptersNewestFirst) {
+        Story s = storyRepository.findByIdWithAuthor(storyId)
+                .orElseThrow(() -> new EntityNotFoundException("Story not found: " + storyId));
 
         List<Chapter> chapterEntities = chaptersNewestFirst
                 ? chapterRepository.findByStoryIdOrderByNumberDesc(s.getId())
                 : chapterRepository.findByStoryIdOrderByNumberAsc(s.getId());
 
-        List<ChapterSummaryDto> chapters = chapterEntities.stream()
-                .map(ch -> new ChapterSummaryDto(
-                        ch.getId(),
-                        ch.getNumber(),
-                        ch.getTitle(),
-                        ch.getStatus(),
-                        ch.getStatus() == ChapterStatus.PUBLISHED, // <-- burada
-                        ch.getPublishedAt(),
-                        false // not: user-specific değilse şimdilik böyle
-                ))
-                .toList();
+        // Kullanıcının okuduğu bölümleri set olarak al
+        Set<Long> readChapterIds = Collections.emptySet(); // Set'in complexity'si daha düşük
+        if (userId != null) {
+            readChapterIds = userChapterProgressRepository.findByUserIdAndChapterStoryId(userId, storyId)
+                    .stream().map(p -> p.getChapter().getId()).collect(Collectors.toSet());
+        }
 
+        final Set<Long> finalReadIds = readChapterIds;
+        return chapterEntities.stream().map(ch -> toDto(ch, finalReadIds.contains(ch.getId()))).toList();
+    }
 
-        return chapters;
+    private void saveProgress(Long userId, Chapter chapter) {
+        // Daha önce kaydedilmemişse ekle
+        if (!userChapterProgressRepository.existsByUserIdAndChapterId(userId, chapter.getId())) {
+            UserChapterProgress progress = new UserChapterProgress();
+            progress.setUser(userRepository.getReferenceById(userId));
+            progress.setChapter(chapter);
+            progress.setReadAt(Instant.now());
+            userChapterProgressRepository.save(progress);
+        }
+    }
+
+    private ChapterSummaryDto toDto(Chapter chapter, boolean isRead) {
+        return new ChapterSummaryDto(chapter.getId(), chapter.getNumber(), chapter.getTitle(), chapter.getStatus(),
+                chapter.getStatus() == ChapterStatus.PUBLISHED, chapter.getPublishedAt(), isRead);
     }
 }

@@ -86,8 +86,7 @@ public class StoryQueryService { // HEMEN OKU
         );
 
         // --------- CHAPTERS (UI: Bölümler) ----------
-        List<ChapterSummaryDto> chapters = chapterQueryService.getChaptersByOrder(s.getId(),
-                                                                false); // EN ESKİDEN EN YENİYE
+        List<ChapterSummaryDto> chapters = chapterQueryService.getChaptersByOrder(s.getId(), userId,false); // EN ESKİDEN EN YENİYE
         int chapterCount = chapters.size();
 
         // --------- COMMENTS (UI: Okur yorumları) ----------
