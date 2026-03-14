@@ -1,7 +1,10 @@
 package com.iremayvaz.content.model.dto;
 
+import com.iremayvaz.common.dto.CommentDto;
 import com.iremayvaz.content.model.enums.ChapterStatus;
 import lombok.*;
+
+import java.util.List;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ChapterReadDto {
@@ -15,5 +18,7 @@ public class ChapterReadDto {
 
     private Integer currentVersionNo;
     private String content;
+
+    private List<CommentDto> comments;
 }
 

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,8 +15,10 @@ import java.time.Instant;
 public class CommentDto {
     private Long id;
     private String content;          // spoiler ise null dönebilirsin
-    private boolean spoiler;
+    private boolean isSpoiler;
     private boolean deleted;
+
+    // Yorumu yapan kişi bilgileri
     private long authorId;
     private String authorUsername;
     private String authorDisplayName;
@@ -24,4 +27,7 @@ public class CommentDto {
     private int replyCount;
     private Long parentId;
     private Instant createdAt;
+
+    // YORUMUN ALTINDAKİ YANITLAR
+    private List<CommentDto> replies;
 }

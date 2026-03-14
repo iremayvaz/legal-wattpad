@@ -42,7 +42,7 @@ public class Comment extends BaseEntity { // yorumun kendisi (content, spoiler, 
     @Column(columnDefinition = "text", nullable = false)
     private String content;
 
-    @Column(nullable = false)
+    @Column(name = "is_spoiler", nullable = false)
     private boolean isSpoiler = false;
 
     // thread (reply)

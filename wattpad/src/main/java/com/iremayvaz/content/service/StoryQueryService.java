@@ -89,30 +89,11 @@ public class StoryQueryService { // HEMEN OKU
         List<ChapterSummaryDto> chapters = chapterQueryService.getChaptersByOrder(s.getId(), userId,false); // EN ESKİDEN EN YENİYE
         int chapterCount = chapters.size();
 
-        // --------- COMMENTS (UI: Okur yorumları) ----------
-        // İlk sayfada örnek 10 root yorum göster
-        Page<Comment> rootComments = commentRepository
-                .findByStoryIdAndDeletedFalseAndParentIsNullOrderByCreatedAtDesc(
-                        s.getId(),
-                        PageRequest.of(0, 10)
-                );
+        //  COMMENTS (UI: Okur yorumları)
+        List<Comment> rootComments = commentRepository.findStoryGeneralComments(storyId);
 
-        List<CommentDto> comments = rootComments.getContent().stream()
-                .map(c -> new CommentDto(
-                        c.getId(),
-                        (c.isSpoiler() ? null : c.getContent()),
-                        c.isSpoiler(),
-                        c.isDeleted(),
-                        c.getAuthor().getId(),
-                        c.getAuthor().getUsername(),
-                        c.getAuthor().getDisplayName(),
-                        c.getLikeCount(),
-                        c.getDislikeCount(),
-                        c.getReplyCount(),
-                        (c.getParent() == null ? null : c.getParent().getId()),
-                        c.getCreatedAt()
-                ))
-                .toList();
+        List<CommentDto> comments = rootComments.stream()
+                .map(this::toCommentDto).toList();
 
         return new StoryInfoResponseDto(
                 s.getId(),
@@ -276,5 +257,31 @@ public class StoryQueryService { // HEMEN OKU
             i++;
         }
         return slug;
+    }
+
+    private CommentDto toCommentDto(Comment c) {
+        CommentDto dto = new CommentDto();
+        dto.setId(c.getId());
+        dto.setContent(c.isSpoiler() ? null : c.getContent()); // Spoiler mantığı: içerik gizleme
+        dto.setSpoiler(c.isSpoiler());
+
+        // YORUM YAZARI BİLGİLERİ
+        dto.setAuthorId(c.getAuthor().getId());
+        dto.setAuthorUsername(c.getAuthor().getUsername());
+        dto.setAuthorDisplayName(c.getAuthor().getDisplayName());
+
+        dto.setLikeCount(c.getLikeCount());
+        dto.setDislikeCount(c.getDislikeCount());
+        dto.setReplyCount(c.getReplyCount());
+        dto.setCreatedAt(c.getCreatedAt());
+
+        // REPLIES
+        if (c.getReplies() != null && !c.getReplies().isEmpty()) {
+            dto.setReplies(c.getReplies().stream()
+                    .map(this::toCommentDto)
+                    .toList());
+        }
+
+        return dto;
     }
 }
