@@ -1,11 +1,13 @@
 package com.iremayvaz.content.controller;
 
+import com.iremayvaz.common.service.FileService;
 import com.iremayvaz.content.model.dto.ChapterListItemDto;
 import com.iremayvaz.content.model.dto.StoryReadInfoDto;
 import com.iremayvaz.content.model.dto.request.CreateStoryRequest;
 import com.iremayvaz.content.model.dto.response.StoryInfoResponseDto;
 import com.iremayvaz.content.model.dto.response.StoryResponse;
 import com.iremayvaz.content.model.dto.response.SuggestionResponseDto;
+import com.iremayvaz.content.model.entity.Story;
 import com.iremayvaz.content.service.StoryCommandService;
 import com.iremayvaz.content.service.StoryQueryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -25,6 +28,7 @@ public class RestStoryController {
 
     private final StoryCommandService storyCommandService;
     private final StoryQueryService storyQueryService;
+    private final FileService fileService;
 
     @Operation(description = "Chapter’ı inceleme sürecine sokup Moderation’a iş oluşturur")
     @PostMapping("/create")
@@ -78,5 +82,14 @@ public class RestStoryController {
     @GetMapping("/{slug}/chapters/read")
     public List<ChapterListItemDto> readChapters(@PathVariable String slug) {
         return storyQueryService.getChaptersForRead(slug);
+    }
+
+    @Operation(description = "Hikayeye kapak fotoğrafı yükle")
+    @PostMapping("/{storyId}/upload-cover")
+    public ResponseEntity<String> uploadCover(@PathVariable Long storyId,
+                                              @RequestParam("file") MultipartFile file) {
+        String coverUrl = fileService.saveFile(file, "covers"); // Dosyayı kaydet
+        storyCommandService.uploadCover(storyId,  coverUrl);
+        return ResponseEntity.ok(coverUrl);
     }
 }

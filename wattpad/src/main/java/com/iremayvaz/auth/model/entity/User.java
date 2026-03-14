@@ -52,6 +52,11 @@ public class User extends BaseEntity {
 
     private Integer totalPenaltyPoints = 0; // Her yayınlanmaya çalışan chapter'ın ceza puanına göre
 
+    @Column(columnDefinition = "text")
+    private String bio;
+
+    private String profilePictureUrl;
+
     @Transient
     public String getDisplayName() {
         String fn = firstName == null ? "" : firstName.trim();

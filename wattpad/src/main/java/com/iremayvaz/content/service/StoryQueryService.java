@@ -1,5 +1,6 @@
 package com.iremayvaz.content.service;
 
+import com.iremayvaz.auth.model.entity.User;
 import com.iremayvaz.auth.repository.UserRepository;
 import com.iremayvaz.common.dto.CommentDto;
 import com.iremayvaz.common.dto.response.RatingSummaryDto;
@@ -79,11 +80,13 @@ public class StoryQueryService { // HEMEN OKU
             inMyList = userLibraryRepository.existsByUserIdAndStoryId(userId, s.getId());
         }
 
-        AuthorDto authorDto = new AuthorDto(
-                s.getAuthor().getId(),
-                s.getAuthor().getUsername(),
-                s.getAuthor().getDisplayName()
-        );
+        User author = s.getAuthor();
+        AuthorDto authorDto = new AuthorDto(author.getId(),
+                author.getUsername(),
+                author.getDisplayName(),
+                author.getBio(),
+                author.getProfilePictureUrl(),
+                0L);
 
         // --------- CHAPTERS (UI: Bölümler) ----------
         List<ChapterSummaryDto> chapters = chapterQueryService.getChaptersByOrder(s.getId(), userId,false); // EN ESKİDEN EN YENİYE

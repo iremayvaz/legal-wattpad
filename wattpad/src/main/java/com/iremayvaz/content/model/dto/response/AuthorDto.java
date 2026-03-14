@@ -13,4 +13,7 @@ public class AuthorDto {
     private Long id;
     private String username;
     private String displayName;
+    private String profilePictureUrl;
+    private String bio;
+    private Long followerCount;
 }
