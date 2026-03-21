@@ -1,7 +1,7 @@
 package com.iremayvaz.content.service;
 
 import com.iremayvaz.auth.repository.UserRepository;
-import com.iremayvaz.common.dto.CommentDto;
+import com.iremayvaz.common.model.dto.CommentDto;
 import com.iremayvaz.common.model.entity.Comment;
 import com.iremayvaz.common.repository.CommentRepository;
 import com.iremayvaz.content.model.dto.ChapterReadDto;

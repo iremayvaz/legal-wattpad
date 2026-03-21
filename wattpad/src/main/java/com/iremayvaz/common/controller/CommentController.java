@@ -1,6 +1,6 @@
 package com.iremayvaz.common.controller;
 
-import com.iremayvaz.common.dto.request.CommentRequest;
+import com.iremayvaz.common.model.dto.request.CommentRequest;
 import com.iremayvaz.common.model.enums.ReactionType;
 import com.iremayvaz.common.service.CommentCommandService;
 import io.swagger.v3.oas.annotations.Operation;

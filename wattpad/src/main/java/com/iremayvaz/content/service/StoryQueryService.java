@@ -1,17 +1,17 @@
 package com.iremayvaz.content.service;
 
 import com.iremayvaz.auth.model.entity.User;
-import com.iremayvaz.auth.repository.UserRepository;
-import com.iremayvaz.common.dto.CommentDto;
-import com.iremayvaz.common.dto.response.RatingSummaryDto;
+import com.iremayvaz.common.model.dto.CommentDto;
+import com.iremayvaz.common.model.dto.response.RatingSummaryDto;
 import com.iremayvaz.common.model.entity.Comment;
 import com.iremayvaz.common.model.entity.StoryRating;
+import com.iremayvaz.common.model.mapper.CommentMapper;
 import com.iremayvaz.common.repository.CommentRepository;
 import com.iremayvaz.common.repository.StoryRatingRepository;
-import com.iremayvaz.common.service.StoryRatingService;
 import com.iremayvaz.content.model.dto.ChapterListItemDto;
 import com.iremayvaz.content.model.dto.ChapterSummaryDto;
 import com.iremayvaz.content.model.dto.StoryReadInfoDto;
+import com.iremayvaz.content.model.dto.mapper.StoryMapper;
 import com.iremayvaz.content.model.dto.request.SuggestionItemDto;
 import com.iremayvaz.content.model.dto.response.*;
 import com.iremayvaz.content.model.entity.Chapter;
@@ -23,7 +23,6 @@ import com.iremayvaz.content.repository.StoryRepository;
 import com.iremayvaz.content.repository.UserLibraryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +43,9 @@ public class StoryQueryService { // HEMEN OKU
     private final StoryRatingRepository storyRatingRepository;
     private final UserLibraryRepository userLibraryRepository;
 
+    private final StoryMapper storyMapper;
+    private final CommentMapper commentMapper;
+
     public List<StoryResponse> getStoriesByAuthor(Long authorId) {
         return storyRepository.findByAuthorId(authorId)
                 .stream()
@@ -57,63 +59,37 @@ public class StoryQueryService { // HEMEN OKU
         Story s = storyRepository.findByIdWithAuthor(storyId)
                 .orElseThrow(() -> new EntityNotFoundException("Story not found: " + storyId));
 
-        long commentCount = commentRepository.countByStoryIdAndDeletedFalse(s.getId());
+        StoryInfoResponseDto dto = storyMapper.toInfoResponse(s);
+
+        dto.setCommentCount(commentRepository.countByStoryIdAndDeletedFalse(s.getId()));
 
         // Rating sistemi henüz yoksa:
         BigDecimal avgRating = storyRatingRepository.avgByStoryId(storyId)
                 .orElse(BigDecimal.ZERO); // null dönebilir
-        long ratingCount = storyRatingRepository.countByStoryId(storyId);
 
-        RatingSummaryDto rating = new RatingSummaryDto(avgRating, ratingCount);
+        dto.setRating(new RatingSummaryDto(avgRating, storyRatingRepository.countByStoryId(storyId)));
 
         Integer myRating = null;
-        if (userId != null) {
-            myRating = storyRatingRepository.findByStoryIdAndUserId(storyId, userId)
-                    .map(StoryRating::getValue)
-                    .orElse(null);
-        }
-
-        // Listeme ekle
         Boolean inMyList = false;
 
         if (userId != null) {
-            inMyList = userLibraryRepository.existsByUserIdAndStoryId(userId, s.getId());
+            dto.setInMyList(userLibraryRepository.existsByUserIdAndStoryId(userId, s.getId()));
+            dto.setMyRating(storyRatingRepository.findByStoryIdAndUserId(storyId, userId)
+                    .map(StoryRating::getValue)
+                    .orElse(null));
         }
 
-        User author = s.getAuthor();
-        AuthorDto authorDto = new AuthorDto(author.getId(),
-                author.getUsername(),
-                author.getDisplayName(),
-                author.getBio(),
-                author.getProfilePictureUrl(),
-                0L);
-
-        // --------- CHAPTERS (UI: Bölümler) ----------
-        List<ChapterSummaryDto> chapters = chapterQueryService.getChaptersByOrder(s.getId(), userId,false); // EN ESKİDEN EN YENİYE
-        int chapterCount = chapters.size();
+        //  CHAPTERS (UI: Bölümler)
+        dto.setChapters(chapterQueryService.getChaptersByOrder(s.getId(), userId, false));
+        dto.setChapterCount(dto.getChapters().size());
 
         //  COMMENTS (UI: Okur yorumları)
         List<Comment> rootComments = commentRepository.findStoryGeneralComments(storyId);
+        dto.setComments(rootComments.stream()
+                .map(commentMapper::toDto)
+                .toList());
 
-        List<CommentDto> comments = rootComments.stream()
-                .map(this::toCommentDto).toList();
-
-        return new StoryInfoResponseDto(
-                s.getId(),
-                s.getTitle(),       // Başlık
-                s.getSlug(),        // Hikaye adının slug'ı
-                s.getDescription(), // Hikaye hakkında
-                s.getCoverUrl(),    // Kapak fotoğrafı
-                s.getStatus(),      // Story durumu
-                authorDto,          // Yazar Bilgisi
-                rating,             // Oy
-                commentCount,       // Yorum
-                chapterCount,       // Bölüm sayısı
-                chapters,           // Bölümler
-                comments,           // Yorumlar
-                inMyList,           // Listeme ekle
-                myRating            // Oyum
-        );
+        return dto;
     }
 
 

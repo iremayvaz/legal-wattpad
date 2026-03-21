@@ -1,4 +1,4 @@
-package com.iremayvaz.common.dto;
+package com.iremayvaz.common.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

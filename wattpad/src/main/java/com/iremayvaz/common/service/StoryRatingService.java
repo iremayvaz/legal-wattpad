@@ -4,7 +4,7 @@ import com.iremayvaz.auth.model.entity.User;
 import com.iremayvaz.auth.repository.UserRepository;
 import com.iremayvaz.common.model.entity.StoryRating;
 import com.iremayvaz.common.repository.StoryRatingRepository;
-import com.iremayvaz.common.dto.response.RatingSummaryDto;
+import com.iremayvaz.common.model.dto.response.RatingSummaryDto;
 import com.iremayvaz.content.model.entity.Story;
 import com.iremayvaz.content.repository.StoryRepository;
 import jakarta.persistence.EntityNotFoundException;

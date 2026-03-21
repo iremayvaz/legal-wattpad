@@ -1,7 +1,7 @@
 package com.iremayvaz.common.controller;
 
-import com.iremayvaz.common.dto.response.RatingSummaryDto;
-import com.iremayvaz.common.dto.request.RateStoryRequest;
+import com.iremayvaz.common.model.dto.response.RatingSummaryDto;
+import com.iremayvaz.common.model.dto.request.RateStoryRequest;
 import com.iremayvaz.common.service.StoryRatingService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;

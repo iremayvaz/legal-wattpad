@@ -1,6 +1,6 @@
 package com.iremayvaz.content.model.dto;
 
-import com.iremayvaz.common.dto.CommentDto;
+import com.iremayvaz.common.model.dto.CommentDto;
 import com.iremayvaz.content.model.enums.ChapterStatus;
 import lombok.*;
 

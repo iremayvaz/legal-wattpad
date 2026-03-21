@@ -1,4 +1,4 @@
-package com.iremayvaz.common.dto.request;
+package com.iremayvaz.common.model.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

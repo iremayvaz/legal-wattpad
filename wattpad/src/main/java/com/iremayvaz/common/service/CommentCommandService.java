@@ -2,10 +2,11 @@ package com.iremayvaz.common.service;
 
 import com.iremayvaz.auth.model.entity.User;
 import com.iremayvaz.auth.repository.UserRepository;
-import com.iremayvaz.common.dto.request.CommentRequest;
+import com.iremayvaz.common.model.dto.request.CommentRequest;
 import com.iremayvaz.common.model.entity.Comment;
 import com.iremayvaz.common.model.entity.CommentReaction;
 import com.iremayvaz.common.model.enums.ReactionType;
+import com.iremayvaz.common.model.mapper.CommentMapper;
 import com.iremayvaz.common.repository.CommentReactionRepository;
 import com.iremayvaz.common.repository.CommentRepository;
 import com.iremayvaz.content.model.entity.Chapter;
@@ -28,6 +29,8 @@ public class CommentCommandService {
     private final StoryRepository storyRepository;
     private final ChapterRepository chapterRepository;
 
+    private final CommentMapper commentMapper;
+
     @Transactional
     public void postComment(Long storyId, Long chapterId, CommentRequest req) {
         User author = userRepository.findById(req.getUserId())
@@ -36,7 +39,7 @@ public class CommentCommandService {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new EntityNotFoundException("Story not found"));
 
-        Comment comment = new Comment();
+        Comment comment = commentMapper.toEntity(req);
         comment.setAuthor(author);
         comment.setStory(story);
         comment.setContent(req.getContent());
