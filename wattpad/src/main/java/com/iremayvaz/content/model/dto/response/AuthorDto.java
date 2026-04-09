@@ -16,4 +16,5 @@ public class AuthorDto {
     private String profilePictureUrl;
     private String bio;
     private Long followerCount;
+    private Boolean isFollowing; // Mevcut kullanıcı bu yazarı takip ediyor mu?
 }

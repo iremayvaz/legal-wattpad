@@ -1,12 +1,14 @@
 package com.iremayvaz.content.service;
 
 import com.iremayvaz.auth.model.entity.User;
+import com.iremayvaz.auth.repository.UserRepository;
 import com.iremayvaz.common.model.dto.CommentDto;
 import com.iremayvaz.common.model.dto.response.RatingSummaryDto;
 import com.iremayvaz.common.model.entity.Comment;
 import com.iremayvaz.common.model.entity.StoryRating;
 import com.iremayvaz.common.model.mapper.CommentMapper;
 import com.iremayvaz.common.repository.CommentRepository;
+import com.iremayvaz.common.repository.FollowRepository;
 import com.iremayvaz.common.repository.StoryRatingRepository;
 import com.iremayvaz.content.model.dto.ChapterListItemDto;
 import com.iremayvaz.content.model.dto.ChapterSummaryDto;
@@ -42,6 +44,7 @@ public class StoryQueryService { // HEMEN OKU
     private final ChapterQueryService chapterQueryService;
     private final StoryRatingRepository storyRatingRepository;
     private final UserLibraryRepository userLibraryRepository;
+    private final FollowRepository followRepository;
 
     private final StoryMapper storyMapper;
     private final CommentMapper commentMapper;
@@ -62,28 +65,29 @@ public class StoryQueryService { // HEMEN OKU
         StoryInfoResponseDto dto = storyMapper.toInfoResponse(s);
 
         dto.setCommentCount(commentRepository.countByStoryIdAndDeletedFalse(s.getId()));
-
-        // Rating sistemi henüz yoksa:
-        BigDecimal avgRating = storyRatingRepository.avgByStoryId(storyId)
-                .orElse(BigDecimal.ZERO); // null dönebilir
-
+        BigDecimal avgRating = storyRatingRepository.avgByStoryId(storyId).orElse(BigDecimal.ZERO);
         dto.setRating(new RatingSummaryDto(avgRating, storyRatingRepository.countByStoryId(storyId)));
-
-        Integer myRating = null;
-        Boolean inMyList = false;
 
         if (userId != null) {
             dto.setInMyList(userLibraryRepository.existsByUserIdAndStoryId(userId, s.getId()));
             dto.setMyRating(storyRatingRepository.findByStoryIdAndUserId(storyId, userId)
                     .map(StoryRating::getValue)
                     .orElse(null));
+
+            // Takip durumunu AuthorDto içine yerleştirelim
+            if (dto.getAuthor() != null) {
+                boolean isFollowing = followRepository.existsByFollowerIdAndFollowingId(userId, s.getAuthor().getId());
+                dto.getAuthor().setIsFollowing(isFollowing);
+            }
         }
 
-        //  CHAPTERS (UI: Bölümler)
+        if (dto.getAuthor() != null) {
+            dto.getAuthor().setFollowerCount(followRepository.countByFollowingId(s.getAuthor().getId()));
+        }
+
         dto.setChapters(chapterQueryService.getChaptersByOrder(s.getId(), userId, false));
         dto.setChapterCount(dto.getChapters().size());
 
-        //  COMMENTS (UI: Okur yorumları)
         List<Comment> rootComments = commentRepository.findStoryGeneralComments(storyId);
         dto.setComments(rootComments.stream()
                 .map(commentMapper::toDto)
