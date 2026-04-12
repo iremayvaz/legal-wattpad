@@ -7,7 +7,6 @@ import com.iremayvaz.content.model.dto.request.CreateStoryRequest;
 import com.iremayvaz.content.model.dto.response.StoryInfoResponseDto;
 import com.iremayvaz.content.model.dto.response.StoryResponse;
 import com.iremayvaz.content.model.dto.response.SuggestionResponseDto;
-import com.iremayvaz.content.model.entity.Story;
 import com.iremayvaz.content.service.StoryCommandService;
 import com.iremayvaz.content.service.StoryQueryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,7 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/story")
 @RequiredArgsConstructor
-public class RestStoryController {
+public class StoryController {
 
     private final StoryCommandService storyCommandService;
     private final StoryQueryService storyQueryService;

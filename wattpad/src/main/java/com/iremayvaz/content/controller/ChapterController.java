@@ -20,7 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/chapter")
 @RequiredArgsConstructor
-public class RestChapterController {
+public class ChapterController {
 
     private final ChapterCommandService chapterCommandService;
     private final ChapterQueryService chapterQueryService;
