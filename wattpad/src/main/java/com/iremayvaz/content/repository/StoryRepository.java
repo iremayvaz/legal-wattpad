@@ -1,6 +1,7 @@
 package com.iremayvaz.content.repository;
 
 import com.iremayvaz.content.model.entity.Story;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -39,4 +40,17 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
     """)
     Optional<Story> findByIdWithAuthor(@Param("id") Long id);
 
+    @Query("SELECT s FROM Story s LEFT JOIN Comment c ON s.id = c.story.id " +
+            "WHERE s.status = 'PUBLISHED' " +
+            "GROUP BY s.id ORDER BY COUNT(c.id) DESC")
+    List<Story> findTopStoriesByCommentCount(Pageable pageable);
+
+    @Query("SELECT DISTINCT s FROM Story s JOIN s.chapters c " +
+            "WHERE s.status = 'PUBLISHED' AND c.status = 'PUBLISHED' " +
+            "ORDER BY c.publishedAt DESC")
+    List<Story> findRecentlyUpdatedStories(Pageable pageable);
+
+    // StoryRepository.java
+    @Query("SELECT s FROM Story s WHERE s.status = 'PUBLISHED' ORDER BY function('RAND')")
+    Page<Story> findAllPublishedRandom(Pageable pageable);
 }

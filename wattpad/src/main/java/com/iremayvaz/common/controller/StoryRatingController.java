@@ -15,13 +15,13 @@ public class StoryRatingController {
 
     private final StoryRatingService storyRatingService;
 
-    // POST /api/stories/{storyId}/rating   body: { "value": 4 }
+    // POST /story/{storyId}/rate   body: { "value": 4 }
     @Operation(description = "Kitabı puanla")
-    @PutMapping("/{story_id}/rate")
+    @PutMapping("/{storyId}/rate")
     public ResponseEntity<RatingSummaryDto> rate(
-            @PathVariable Long story_id,
+            @PathVariable Long storyId,
             @RequestBody RateStoryRequest req
     ) {
-        return ResponseEntity.ok(storyRatingService.rateStory(story_id, req.getUser_id(), req.getValue())); // Security gelince body’den kaldırıp current user’dan çekeceksin
+        return ResponseEntity.ok(storyRatingService.rateStory(storyId, req.getUser_id(), req.getValue())); // Security gelince body’den kaldırıp current user’dan çekeceksin
     }
 }

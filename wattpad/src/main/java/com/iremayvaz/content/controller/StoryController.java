@@ -13,10 +13,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 
 @Tag(name = "Story API", description = "Hikaye işlemleri")
@@ -66,21 +68,23 @@ public class StoryController {
 
     @Operation(description = "HEMEN OKU BUTONU")
     @GetMapping("/{slug}/read-info")
-    public StoryReadInfoDto readInfo(@PathVariable String slug) {
-        return storyQueryService.getStoryReadInfo(slug);
+    public StoryReadInfoDto readInfo(@PathVariable String slug,
+                                     @RequestParam Long userId) throws AccessDeniedException {
+        return storyQueryService.getStoryReadInfo(slug,  userId);
     }
 
     @Operation(description = "LİSTEME EKLE BUTONU")
-    @PostMapping("/{story_id}/library")
-    public void addToLibrary(@PathVariable Long story_id,
-                             @RequestParam Long user_id) {
-        storyCommandService.toggleLibrary(story_id, user_id);
+    @PostMapping("/{storyId}/library")
+    public void addToLibrary(@PathVariable Long storyId,
+                             @RequestParam Long userId) {
+        storyCommandService.toggleLibrary(storyId, userId);
     }
 
     @Operation(description = "Hikaye chapter bilgileri")
     @GetMapping("/{slug}/chapters/read")
-    public List<ChapterListItemDto> readChapters(@PathVariable String slug) {
-        return storyQueryService.getChaptersForRead(slug);
+    public List<ChapterListItemDto> readChapters(@PathVariable String slug,
+                                                 @RequestParam Long userId) {
+        return storyQueryService.getChaptersForRead(slug, userId);
     }
 
     @Operation(description = "Hikayeye kapak fotoğrafı yükle")
@@ -90,5 +94,26 @@ public class StoryController {
         String coverUrl = fileService.saveFile(file, "covers"); // Dosyayı kaydet
         storyCommandService.uploadCover(storyId,  coverUrl);
         return ResponseEntity.ok(coverUrl);
+    }
+
+    @Operation(description = "Popüler hikayeleri görüntüle")
+    @GetMapping("/popular/ones")
+    public List<StoryResponse> getTrendingStories(@RequestParam(defaultValue = "8") int limit) {
+        int safeLimit = Math.min(limit, 50); // TEK SAYFADA MAX GORUNTULENEBİLİRLİK
+        return storyQueryService.getTrendingStories(safeLimit);
+    }
+
+    @Operation(description = "Yeni çıkan hikayeleri görüntüle")
+    @GetMapping("/new/ones")
+    public List<StoryResponse> getNewArrivals(@RequestParam(defaultValue = "8") int limit) {
+        int safeLimit = Math.min(limit, 50);
+        return storyQueryService.getNewArrivals(safeLimit);
+    }
+
+    @Operation(description = "Keşfet sayfası")
+    @GetMapping("/fyp")
+    public Page<StoryResponse> getAllStoriesPaged(@RequestParam(defaultValue = "8") int page,
+                                                  @RequestParam(defaultValue = "8") int size) {
+        return storyQueryService.getAllStoriesPaged(page, size);
     }
 }

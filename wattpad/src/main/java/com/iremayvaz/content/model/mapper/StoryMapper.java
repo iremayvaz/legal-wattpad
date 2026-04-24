@@ -1,6 +1,8 @@
-package com.iremayvaz.content.model.dto.mapper;
+package com.iremayvaz.content.model.mapper;
 
 import com.iremayvaz.auth.model.entity.User;
+import com.iremayvaz.content.model.dto.StoryReadInfoDto;
+import com.iremayvaz.content.model.dto.request.SuggestionItemDto;
 import com.iremayvaz.content.model.dto.response.AuthorDto;
 import com.iremayvaz.content.model.dto.response.StoryInfoResponseDto;
 import com.iremayvaz.content.model.dto.response.StoryResponse;
@@ -29,4 +31,15 @@ public interface StoryMapper {
     @Mapping(target = "displayName", expression = "java(user.getDisplayName())")
     @Mapping(target = "followerCount", constant = "0L")
     AuthorDto toAuthorDto(User user);
+
+    // Story -> StoryReadInfoDto (Hemen Oku sayfası için)
+    @Mapping(target = "authorId", source = "author.id")
+    @Mapping(target = "authorName", expression = "java(story.getAuthor().getDisplayName())")
+    StoryReadInfoDto toReadInfoDto(Story story);
+
+    // Story -> SuggestionItemDto (Öneri ve arama sonuçları için)
+    @Mapping(target = "author", source = "author.displayName")
+    @Mapping(target = "score", ignore = true)
+    @Mapping(target = "match", ignore = true)
+    SuggestionItemDto toSuggestionItemDto(Story story);
 }

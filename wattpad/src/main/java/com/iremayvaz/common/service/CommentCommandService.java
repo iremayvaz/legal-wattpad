@@ -70,11 +70,11 @@ public class CommentCommandService {
         if (existing.isPresent()) {
             CommentReaction reaction = existing.get();
             if (reaction.getType() == type) {
-                // Aynı tepki -> Tepkiyi geri çek (Remove)
+                // Aynı tepki -> Tepkiyi geri çek
                 updateCommentCounts(comment, type, -1);
                 commentReactionRepository.delete(reaction);
             } else {
-                // Farklı tepki -> Tepkiyi değiştir (Change)
+                // Farklı tepki -> Tepkiyi değiştir
                 updateCommentCounts(comment, reaction.getType(), -1);
                 updateCommentCounts(comment, type, 1);
                 reaction.setType(type);

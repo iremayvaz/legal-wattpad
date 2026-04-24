@@ -2,12 +2,12 @@ package com.iremayvaz.content.service;
 
 import com.iremayvaz.auth.model.entity.User;
 import com.iremayvaz.auth.repository.UserRepository;
-import com.iremayvaz.common.repository.CommentRepository;
 import com.iremayvaz.content.model.dto.request.CreateStoryRequest;
 import com.iremayvaz.content.model.dto.response.StoryResponse;
 import com.iremayvaz.content.model.entity.Story;
 import com.iremayvaz.content.model.entity.UserLibrary;
 import com.iremayvaz.content.model.enums.StoryStatus;
+import com.iremayvaz.content.model.mapper.StoryMapper;
 import com.iremayvaz.content.repository.StoryRepository;
 import com.iremayvaz.content.repository.UserLibraryRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,8 @@ public class StoryCommandService { // YAZ/DEĞİŞTİR
     private final StoryRepository storyRepository;
     private final UserRepository userRepository;
     private final UserLibraryRepository userLibraryRepository;
-    private final CommentRepository commentRepository;
+
+    private final StoryMapper storyMapper;
 
     // Yeni hikaye oluşturuluyor
     public StoryResponse createStory(Long authorId, CreateStoryRequest createStoryRequest) {
@@ -38,11 +39,12 @@ public class StoryCommandService { // YAZ/DEĞİŞTİR
         story.setStatus(StoryStatus.DRAFT);
 
         story.setSlug(generateSlug(createStoryRequest.getTitle()));
+        storyRepository.save(story);
 
-        Story saved = storyRepository.save(story);
-        return toStoryResponse(story);
+        return storyMapper.toResponse(story);
     }
 
+    // Kullanıcı kütüphanesine kayıt ediliyor
     @Transactional
     public void toggleLibrary(Long storyId, Long userId) {
         Optional<UserLibrary> existing = userLibraryRepository.findByUserIdAndStoryId(userId, storyId);
@@ -56,6 +58,7 @@ public class StoryCommandService { // YAZ/DEĞİŞTİR
         }
     }
 
+    // Hikayeye kapak fotoğrafı yükleniyor
     public void uploadCover(Long storyId, String coverUrl) {
         Story story = storyRepository.findById(storyId).orElseThrow();
 
@@ -71,14 +74,15 @@ public class StoryCommandService { // YAZ/DEĞİŞTİR
                 .replaceAll("\\s+", "-");
     }
 
-    private StoryResponse toStoryResponse(Story story) {
-        StoryResponse storyResponse = new StoryResponse();
-        storyResponse.setId(story.getId());
-        storyResponse.setAuthorId(story.getAuthor().getId());
-        storyResponse.setTitle(story.getTitle());
-        storyResponse.setSlug(story.getSlug());
-        storyResponse.setDescription(story.getDescription());
-        storyResponse.setStatus(story.getStatus());
-        return storyResponse;
+    private String generateUniqueSlug(String title) {
+        String base = generateSlug(title);
+        String slug = base;
+        int i = 2;
+
+        while (storyRepository.existsBySlug(slug)) {
+            slug = base + "-" + i;
+            i++;
+        }
+        return slug;
     }
 }

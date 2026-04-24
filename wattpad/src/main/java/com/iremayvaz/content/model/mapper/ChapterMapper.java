@@ -1,4 +1,4 @@
-package com.iremayvaz.content.model.dto.mapper;
+package com.iremayvaz.content.model.mapper;
 
 import com.iremayvaz.content.model.dto.ChapterListItemDto;
 import com.iremayvaz.content.model.dto.ChapterReadDto;
@@ -13,8 +13,8 @@ public interface ChapterMapper {
 
     // Chapter -> ChapterSummaryDto
     @Mapping(target = "published", expression = "java(chapter.getStatus() == ChapterStatus.PUBLISHED)")
-    @Mapping(target = "read", ignore = true) // Kullanıcıya özel bilgi, serviste setlenir
-    ChapterSummaryDto toSummaryDto(Chapter chapter);
+    @Mapping(target = "read", source = "isRead") // Kullanıcıya özel bilgi, serviste setlenir
+    ChapterSummaryDto toSummaryDto(Chapter chapter, boolean isRead);
 
     // Chapter -> ChapterReadDto (Okuma sayfası)
     @Mapping(target = "storyId", source = "story.id")

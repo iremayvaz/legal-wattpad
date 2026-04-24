@@ -1,6 +1,6 @@
 package com.iremayvaz.content.service;
 
-import com.iremayvaz.content.model.dto.mapper.StoryMapper;
+import com.iremayvaz.content.model.mapper.StoryMapper;
 import com.iremayvaz.content.model.dto.response.StoryResponse;
 import com.iremayvaz.content.repository.UserLibraryRepository;
 import lombok.RequiredArgsConstructor;

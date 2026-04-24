@@ -3,6 +3,7 @@ package com.iremayvaz.common.service;
 import com.iremayvaz.auth.model.entity.User;
 import com.iremayvaz.auth.repository.UserRepository;
 import com.iremayvaz.common.model.entity.StoryRating;
+import com.iremayvaz.common.model.mapper.RatingMapper;
 import com.iremayvaz.common.repository.StoryRatingRepository;
 import com.iremayvaz.common.model.dto.response.RatingSummaryDto;
 import com.iremayvaz.content.model.entity.Story;
@@ -22,6 +23,8 @@ public class StoryRatingService {
     private final UserRepository userRepository;
     private final StoryRatingRepository storyRatingRepository;
 
+    private final RatingMapper ratingMapper;
+
     @Transactional
     public RatingSummaryDto rateStory(Long storyId, Long userId, int value) {
         if (value < 0 || value > 5) throw new IllegalArgumentException("0..5 olmalı");
@@ -34,10 +37,10 @@ public class StoryRatingService {
 
         StoryRating r = storyRatingRepository.findByStoryIdAndUserId(storyId, userId)
                 .orElseGet(() -> {
-                    StoryRating x = new StoryRating();
-                    x.setStory(story);
-                    x.setUser(user);
-                    return x;
+                    StoryRating rating = new StoryRating();
+                    rating.setStory(story);
+                    rating.setUser(user);
+                    return rating;
                 });
 
         r.setValue(value);
@@ -46,7 +49,7 @@ public class StoryRatingService {
         BigDecimal avg = storyRatingRepository.avgByStoryId(storyId).orElse(BigDecimal.ZERO);
         long count = storyRatingRepository.countByStoryId(storyId);
 
-        return new RatingSummaryDto(avg, count);
+        return ratingMapper.toSummaryDto(avg, count);
     }
 
     public int findByStoryIdAndUserId(Long storyId, Long currentUser_id) {

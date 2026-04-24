@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 
 @Tag(name = "Chapter API", description = "Bölüm işlemleri")
@@ -53,7 +54,7 @@ public class ChapterController {
 
     @GetMapping("/{chapterId}/read") // Story id alınmalı sanki?
     public ChapterReadDto readChapter(@PathVariable Long chapterId,
-                                      @RequestParam Long userId) {
+                                      @RequestParam Long userId) throws AccessDeniedException {
         return chapterQueryService.getChapterRead(chapterId, userId);
     }
 

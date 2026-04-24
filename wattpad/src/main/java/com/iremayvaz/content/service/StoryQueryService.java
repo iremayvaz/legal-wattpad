@@ -2,7 +2,6 @@ package com.iremayvaz.content.service;
 
 import com.iremayvaz.auth.model.entity.User;
 import com.iremayvaz.auth.repository.UserRepository;
-import com.iremayvaz.common.model.dto.CommentDto;
 import com.iremayvaz.common.model.dto.response.RatingSummaryDto;
 import com.iremayvaz.common.model.entity.Comment;
 import com.iremayvaz.common.model.entity.StoryRating;
@@ -11,25 +10,28 @@ import com.iremayvaz.common.repository.CommentRepository;
 import com.iremayvaz.common.repository.FollowRepository;
 import com.iremayvaz.common.repository.StoryRatingRepository;
 import com.iremayvaz.content.model.dto.ChapterListItemDto;
-import com.iremayvaz.content.model.dto.ChapterSummaryDto;
 import com.iremayvaz.content.model.dto.StoryReadInfoDto;
-import com.iremayvaz.content.model.dto.mapper.StoryMapper;
+import com.iremayvaz.content.model.mapper.ChapterMapper;
+import com.iremayvaz.content.model.mapper.StoryMapper;
 import com.iremayvaz.content.model.dto.request.SuggestionItemDto;
 import com.iremayvaz.content.model.dto.response.*;
 import com.iremayvaz.content.model.entity.Chapter;
 import com.iremayvaz.content.model.entity.Story;
 import com.iremayvaz.content.model.enums.ChapterStatus;
-import com.iremayvaz.content.model.enums.StoryStatus;
 import com.iremayvaz.content.repository.ChapterRepository;
 import com.iremayvaz.content.repository.StoryRepository;
 import com.iremayvaz.content.repository.UserLibraryRepository;
+import com.iremayvaz.content.security.ContentAccessPolicy;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import org.springframework.security.access.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -45,14 +47,17 @@ public class StoryQueryService { // HEMEN OKU
     private final StoryRatingRepository storyRatingRepository;
     private final UserLibraryRepository userLibraryRepository;
     private final FollowRepository followRepository;
+    private final UserRepository userRepository;
 
     private final StoryMapper storyMapper;
     private final CommentMapper commentMapper;
+    private final ContentAccessPolicy contentAccessPolicy;
+    private final ChapterMapper chapterMapper;
 
     public List<StoryResponse> getStoriesByAuthor(Long authorId) {
         return storyRepository.findByAuthorId(authorId)
                 .stream()
-                .map(this::toStoryResponse)
+                .map(storyMapper::toResponse)
                 .toList();
     }
 
@@ -100,7 +105,7 @@ public class StoryQueryService { // HEMEN OKU
     public List<StoryResponse> getAllStories() {
         return storyRepository.findAll()
                 .stream()
-                .map(this::toStoryResponse)
+                .map(storyMapper::toResponse)
                 .toList();
     }
 
@@ -115,7 +120,7 @@ public class StoryQueryService { // HEMEN OKU
         List<Story> candidates = storyRepository.findCandidates(q, PageRequest.of(0, candidateSize));
 
         List<SuggestionItemDto> scored = candidates.stream()
-                .map(b -> score(b, q))
+                .map(story -> score(story, q))
                 .filter(dto -> dto.getScore() > 0)
                 .sorted(Comparator
                         .comparingInt(SuggestionItemDto::getScore).reversed()
@@ -129,55 +134,48 @@ public class StoryQueryService { // HEMEN OKU
     }
 
     @Transactional(readOnly = true)
-    public StoryReadInfoDto getStoryReadInfo(String slug) {
-        Story story = storyRepository.findBySlug(slug)
-                .orElseThrow(() -> new EntityNotFoundException("Story not found: " + slug));
-
-        // Public okuma: sadece PUBLISHED story
-        if (story.getStatus() != StoryStatus.PUBLISHED) {
-            // 404 gibi davranmak daha güvenli
-            throw new EntityNotFoundException("Story not found: " + slug);
-        }
-
-        return StoryReadInfoDto.builder()
-                .id(story.getId())
-                .title(story.getTitle())
-                .slug(story.getSlug())
-                .description(story.getDescription())
-                .coverUrl(story.getCoverUrl())
-                .status(story.getStatus())
-                .authorId(story.getAuthor().getId())
-                .authorName(story.getAuthor().getDisplayName())
-                .build();
+    public StoryReadInfoDto getStoryReadInfo(String slug, Long userId) throws AccessDeniedException {
+        Story story = findStoryBySlug(slug, userId);
+        return storyMapper.toReadInfoDto(story);
     }
 
     @Transactional(readOnly = true)
-    public List<ChapterListItemDto> getChaptersForRead(String slug) {
-        Story story = storyRepository.findBySlug(slug)
-                .orElseThrow(() -> new EntityNotFoundException("Story not found: " + slug));
-
-        if (story.getStatus() != StoryStatus.PUBLISHED) {
-            throw new EntityNotFoundException("Story not found: " + slug);
-        }
-
+    public List<ChapterListItemDto> getChaptersForRead(String slug, Long userId) {
+        Story story = findStoryBySlug(slug, userId);
         List<Chapter> chapters = chapterRepository.findAllByStorySlugOrderByNumber(slug);
 
         return chapters.stream()
                 .filter(c -> c.getStatus() == ChapterStatus.PUBLISHED)
-                .map(c -> ChapterListItemDto.builder()
-                        .id(c.getId())
-                        .number(c.getNumber())
-                        .title(c.getTitle())
-                        .status(c.getStatus())
-                        .readable(true)
-                        .build())
+                .map(chapterMapper::toListItemDto)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<StoryResponse> getTrendingStories(int limit) {
+        return storyRepository.findTopStoriesByCommentCount(PageRequest.of(0, limit))
+                .stream()
+                .map(storyMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<StoryResponse> getNewArrivals(int limit) {
+        return storyRepository.findRecentlyUpdatedStories(PageRequest.of(0, limit))
+                .stream()
+                .map(storyMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<StoryResponse> getAllStoriesPaged(int page, int size) {
+        return storyRepository.findAllPublishedRandom(PageRequest.of(page, size))
+                .map(storyMapper::toResponse);
     }
 
     // PRIVATE UTILITY METHODS
     private SuggestionItemDto score(Story b, String q) {
         String title = safeLower(normalize(b.getTitle()));
-        String author = safeLower(normalize(b.getAuthor().getFirstName() + ' ' + b.getAuthor().getLastName()));
+        String author = safeLower(normalize(b.getAuthor().getDisplayName()));
 
         int score = 0;
         List<String> match = new ArrayList<>();
@@ -190,20 +188,17 @@ public class StoryQueryService { // HEMEN OKU
             if (author.contains(q)) { score += 35; match.add("author_contains"); }
         }
 
-        return new SuggestionItemDto(
-                b.getId(),
-                b.getTitle(),
-                (b.getAuthor().getFirstName() + ' ' + b.getAuthor().getLastName()),
-                b.getCoverUrl(),
-                score,
-                match
-        );
+        SuggestionItemDto dto = storyMapper.toSuggestionItemDto(b);
+        dto.setScore(score);
+        dto.setMatch(match);
+
+        return dto;
     }
 
     private String normalize(String s) {
         if (s == null) return "";
         s = s.trim().toLowerCase(Locale.forLanguageTag("tr"));
-        // İstersen TR sadeleştirme:
+        // TR sadeleştirme:
         s = s.replace('ı','i').replace('İ','i')
                 .replace('ş','s').replace('ğ','g')
                 .replace('ü','u').replace('ö','o').replace('ç','c');
@@ -212,59 +207,16 @@ public class StoryQueryService { // HEMEN OKU
 
     private String safeLower(String s) { return s == null ? "" : s.toLowerCase(); }
 
-    private StoryResponse toStoryResponse(Story story) {
-        StoryResponse storyResponse = new StoryResponse();
-        storyResponse.setId(story.getId());
-        storyResponse.setAuthorId(story.getAuthor().getId());
-        storyResponse.setTitle(story.getTitle());
-        storyResponse.setSlug(story.getSlug());
-        storyResponse.setDescription(story.getDescription());
-        storyResponse.setStatus(story.getStatus());
-        return storyResponse;
-    }
+    private Story findStoryBySlug(String slug, Long userId) {
+        Story story = storyRepository.findBySlug(slug)
+                .orElseThrow(() -> new EntityNotFoundException("Story not found: " + slug));
 
-    private String generateSlug(String title) {
-        return title.toLowerCase()
-                .replaceAll("[^a-z0-9ğüşöçıİ ]", "")
-                .trim()
-                .replaceAll("\\s+", "-");
-    }
+        User currentUser = (userId != null) ? userRepository.findById(userId).orElse(null) : null;
 
-    private String generateUniqueSlug(String title) {
-        String base = generateSlug(title);
-        String slug = base;
-        int i = 2;
-
-        while (storyRepository.existsBySlug(slug)) {
-            slug = base + "-" + i;
-            i++;
-        }
-        return slug;
-    }
-
-    private CommentDto toCommentDto(Comment c) {
-        CommentDto dto = new CommentDto();
-        dto.setId(c.getId());
-        dto.setContent(c.isSpoiler() ? null : c.getContent()); // Spoiler mantığı: içerik gizleme
-        dto.setSpoiler(c.isSpoiler());
-
-        // YORUM YAZARI BİLGİLERİ
-        dto.setAuthorId(c.getAuthor().getId());
-        dto.setAuthorUsername(c.getAuthor().getUsername());
-        dto.setAuthorDisplayName(c.getAuthor().getDisplayName());
-
-        dto.setLikeCount(c.getLikeCount());
-        dto.setDislikeCount(c.getDislikeCount());
-        dto.setReplyCount(c.getReplyCount());
-        dto.setCreatedAt(c.getCreatedAt());
-
-        // REPLIES
-        if (c.getReplies() != null && !c.getReplies().isEmpty()) {
-            dto.setReplies(c.getReplies().stream()
-                    .map(this::toCommentDto)
-                    .toList());
+        if (!contentAccessPolicy.canReadStory(currentUser, story)) {
+            throw new AccessDeniedException("Bu hikayeye erişim yetkiniz yok.");
         }
 
-        return dto;
+        return story;
     }
 }

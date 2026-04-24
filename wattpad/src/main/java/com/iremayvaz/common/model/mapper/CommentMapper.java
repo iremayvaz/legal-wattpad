@@ -16,12 +16,10 @@ public interface CommentMapper {
     @Mapping(target = "content", expression = "java(comment.isSpoiler() ? null : comment.getContent())")
     CommentDto toDto(Comment comment);
 
-    // CommentMapper.java
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "author", ignore = true) // Serviste id ile çekilecek
     @Mapping(target = "story", ignore = true)
     @Mapping(target = "chapter", ignore = true)
     @Mapping(target = "parent", ignore = true)
     Comment toEntity(CommentRequest req);
-
 }
