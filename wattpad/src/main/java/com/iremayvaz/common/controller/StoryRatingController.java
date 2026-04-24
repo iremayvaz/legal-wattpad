@@ -9,19 +9,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/story")
+@RequestMapping("/rate")
 @RequiredArgsConstructor
 public class StoryRatingController {
 
     private final StoryRatingService storyRatingService;
 
-    // POST /story/{storyId}/rate   body: { "value": 4 }
+    // POST /rate/story/{storyId}  body: { "value": 4 }
     @Operation(description = "Kitabı puanla")
-    @PutMapping("/{storyId}/rate")
-    public ResponseEntity<RatingSummaryDto> rate(
-            @PathVariable Long storyId,
-            @RequestBody RateStoryRequest req
-    ) {
+    @PutMapping("/story/{storyId}")
+    public ResponseEntity<RatingSummaryDto> rate(@PathVariable Long storyId,
+                                                 @RequestBody RateStoryRequest req) {
         return ResponseEntity.ok(storyRatingService.rateStory(storyId, req.getUser_id(), req.getValue())); // Security gelince body’den kaldırıp current user’dan çekeceksin
     }
 }

@@ -27,37 +27,37 @@ public class ChapterController {
     private final ChapterQueryService chapterQueryService;
     private final ChapterVersionService chapterVersionService;
 
+    @Operation(description = "Hikaye bölümü taslak")
     @PostMapping("/draft")
-    public ResponseEntity<ChapterResponse> createDraft(
-            @RequestParam Long storyId,
-            @RequestParam Integer number,
-            @RequestParam(required = false) String title
-    ) {
+    public ResponseEntity<ChapterResponse> createDraft(@RequestParam Long storyId,
+                                                       @RequestParam Integer number,
+                                                       @RequestParam(required = false) String title) {
         return ResponseEntity.ok(chapterCommandService.createChapterDraft(storyId, number, title));
     }
 
+    @Operation(description = "Bölüm versiyonu ekle (kullanıcı SUBMIT der)")
     @PostMapping("/{chapterId}/versions")
-    public ResponseEntity<ChapterVersionResponse> addVersion(
-            @PathVariable Long chapterId,
-            @RequestParam Long userId,
-            @RequestBody AddChapterVersionRequest addChapterVersionRequest
-    ) {
+    public ResponseEntity<ChapterVersionResponse> addVersion(@PathVariable Long chapterId,
+                                                             @RequestParam Long userId,
+                                                             @RequestBody AddChapterVersionRequest addChapterVersionRequest) {
         return ResponseEntity.ok(chapterVersionService.addNewVersion(chapterId, userId, addChapterVersionRequest));
     }
 
-    @Operation(description = "Chapter’ı inceleme sürecine sokup Moderation’a iş oluşturur")
+    @Operation(description = "Chapter’ı inceleme sürecine gönderip Moderation’a iş oluşturur")
     @PostMapping("/{chapterId}/submit")
     public ResponseEntity<Void> submit(@PathVariable Long chapterId) {
         chapterCommandService.submitForReview(chapterId);
         return ResponseEntity.ok().build();
     }
 
+    @Operation(description = "Bölümü oku")
     @GetMapping("/{chapterId}/read") // Story id alınmalı sanki?
     public ChapterReadDto readChapter(@PathVariable Long chapterId,
                                       @RequestParam Long userId) throws AccessDeniedException {
         return chapterQueryService.getChapterRead(chapterId, userId);
     }
 
+    @Operation(description = "Bölümleri sırayla al (Bölümleri görüntülerken)")
     @GetMapping("/story/{storyId}")
     public List<ChapterSummaryDto> getChaptersByOrder(@PathVariable Long storyId,
                                                       @RequestParam Long userId,
