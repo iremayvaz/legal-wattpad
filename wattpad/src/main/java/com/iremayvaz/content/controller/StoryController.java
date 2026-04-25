@@ -7,6 +7,7 @@ import com.iremayvaz.content.model.dto.request.CreateStoryRequest;
 import com.iremayvaz.content.model.dto.response.StoryInfoResponseDto;
 import com.iremayvaz.content.model.dto.response.StoryResponse;
 import com.iremayvaz.content.model.dto.response.SuggestionResponseDto;
+import com.iremayvaz.content.model.enums.StoryStatus;
 import com.iremayvaz.content.service.StoryCommandService;
 import com.iremayvaz.content.service.StoryQueryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -115,5 +116,16 @@ public class StoryController {
     public Page<StoryResponse> getAllStoriesPaged(@RequestParam(defaultValue = "8") int page,
                                                   @RequestParam(defaultValue = "8") int size) {
         return storyQueryService.getAllStoriesPaged(page, size);
+    }
+
+    @Operation(description = "Kullanıcının yazdıkları")
+    @GetMapping("/that/i/have")
+    public List<StoryResponse> getUserPublishedStories(@RequestParam Long userId,
+                                                       @RequestParam StoryStatus status) {
+        if (status == StoryStatus.PUBLISHED) {
+            return storyQueryService.getUserPublishedStories(userId);   // YAYINLANANLAR
+        } else {
+            return storyQueryService.getUserDraftStories(userId);       // TASLAKLAR
+        }
     }
 }

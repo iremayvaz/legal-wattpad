@@ -11,6 +11,7 @@ import com.iremayvaz.common.repository.FollowRepository;
 import com.iremayvaz.common.repository.StoryRatingRepository;
 import com.iremayvaz.content.model.dto.ChapterListItemDto;
 import com.iremayvaz.content.model.dto.StoryReadInfoDto;
+import com.iremayvaz.content.model.enums.StoryStatus;
 import com.iremayvaz.content.model.mapper.ChapterMapper;
 import com.iremayvaz.content.model.mapper.StoryMapper;
 import com.iremayvaz.content.model.dto.request.SuggestionItemDto;
@@ -170,6 +171,22 @@ public class StoryQueryService { // HEMEN OKU
     public Page<StoryResponse> getAllStoriesPaged(int page, int size) {
         return storyRepository.findAllPublishedRandom(PageRequest.of(page, size))
                 .map(storyMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StoryResponse> getUserPublishedStories(Long userId) {
+        return storyRepository.findByAuthorIdAndStatus(userId, StoryStatus.PUBLISHED)
+                .stream()
+                .map(storyMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<StoryResponse> getUserDraftStories(Long userId) {
+        return storyRepository.findByAuthorIdAndStatus(userId, StoryStatus.DRAFT)
+                .stream()
+                .map(storyMapper::toResponse)
+                .toList();
     }
 
     // PRIVATE UTILITY METHODS
