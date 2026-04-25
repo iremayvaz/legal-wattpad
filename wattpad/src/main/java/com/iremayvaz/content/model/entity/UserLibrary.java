@@ -2,6 +2,7 @@ package com.iremayvaz.content.model.entity;
 
 import com.iremayvaz.auth.model.entity.User;
 import com.iremayvaz.common.model.entity.BaseEntity;
+import com.iremayvaz.content.model.enums.LibraryStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,4 +20,7 @@ public class UserLibrary extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "story_id", nullable = false)
     private Story story;
+
+    @Enumerated(EnumType.STRING)
+    private LibraryStatus libraryStatus = LibraryStatus.ALL; // varsayılan -> HEPSİ
 }

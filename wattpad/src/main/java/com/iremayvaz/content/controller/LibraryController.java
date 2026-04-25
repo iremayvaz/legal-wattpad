@@ -1,5 +1,6 @@
 package com.iremayvaz.content.controller;
 
+import com.iremayvaz.content.model.dto.LibraryItemDto;
 import com.iremayvaz.content.model.dto.response.StoryResponse;
 import com.iremayvaz.content.service.UserLibraryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +22,7 @@ public class LibraryController {
 
     @Operation(description = "Kullanıcının kütüphanesindeki kitapları listele")
     @GetMapping
-    public ResponseEntity<List<StoryResponse>> getUserLibrary(@RequestParam Long userId) {
+    public ResponseEntity<List<LibraryItemDto>> getUserLibrary(@RequestParam Long userId) {
         return ResponseEntity.ok(userLibraryService.getUserLibrary(userId));
     }
 }

@@ -10,4 +10,6 @@ public interface UserChapterProgressRepository extends JpaRepository<UserChapter
     List<UserChapterProgress> findByUserIdAndChapterStoryId(Long userId, Long storyId);
     // Kullanıcı bölümü hiç okumuş mu?
     Boolean existsByUserIdAndChapterId(Long userId, Long chapterId);
+
+    long countByUserIdAndChapterStoryId(Long userId, Long id);
 }

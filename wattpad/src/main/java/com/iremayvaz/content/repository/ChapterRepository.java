@@ -41,4 +41,6 @@ public interface ChapterRepository extends JpaRepository<Chapter, Long> {
         order by c.number asc
     """)
     List<Chapter> findByStorySlugAndStatus(@Param("slug") String slug, @Param("status") ChapterStatus status);
+
+    long countByStoryIdAndStatus(Long id, ChapterStatus chapterStatus);
 }
