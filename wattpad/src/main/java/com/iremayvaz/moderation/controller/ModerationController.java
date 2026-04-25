@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/moderation")
 @RequiredArgsConstructor
-public class RestModerationController {
+public class ModerationController {
     private final ModerationService moderationService;
     private final ModerationQueueRepository moderationQueueRepository;
 
