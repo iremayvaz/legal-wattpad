@@ -29,7 +29,7 @@ public interface StoryMapper {
 
     // User -> AuthorDto
     @Mapping(target = "displayName", expression = "java(user.getDisplayName())")
-    @Mapping(target = "followerCount", constant = "0L")
+    @Mapping(target = "followerCount", ignore = true) // followerCount'ı kendimiz set edeceğiz
     AuthorDto toAuthorDto(User user);
 
     // Story -> StoryReadInfoDto (Hemen Oku sayfası için)
